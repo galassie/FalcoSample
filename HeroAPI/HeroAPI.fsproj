@@ -5,7 +5,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Startup.fs" />
+    <PackageReference Include="Microsoft.Data.SQLite" Version="5.0.1" />
+    <PackageReference Include="Falco" Version="3.0.2" />
+    <PackageReference Include="Donald" Version="5.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Domain.fs" />
+    <Compile Include="DataAccess.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

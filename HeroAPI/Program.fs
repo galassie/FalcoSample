@@ -1,25 +1,41 @@
-namespace HeroAPI
+module HeroAPI.Program
 
-open System
-open System.Collections.Generic
-open System.IO
-open System.Linq
-open System.Threading.Tasks
-open Microsoft.AspNetCore
-open Microsoft.AspNetCore.Hosting
-open Microsoft.Extensions.Configuration
-open Microsoft.Extensions.Hosting
-open Microsoft.Extensions.Logging
+open Falco
+open Falco.Routing
+open Falco.HostBuilder
+open HeroAPI.Domain
+open HeroAPI.DataAccess
 
-module Program =
-    let createHostBuilder args =
-        Host.CreateDefaultBuilder(args)
-            .ConfigureWebHostDefaults(fun webBuilder ->
-                webBuilder.UseStartup<Startup>() |> ignore
-            )
+let storage = new HeroSqliteStorage()
 
-    [<EntryPoint>]
-    let main args =
-        createHostBuilder(args).Build().Run()
+let getHeroesWithStorage = getHeroes storage
+let createHeroWithStorage = createHero storage
 
-        0 // Exit code
+let handleGetHeroes : HttpHandler =
+    Request.mapRoute
+        (ignore)
+        (fun _ -> 
+            getHeroesWithStorage ()
+            |> Response.ofJson)
+
+let handleCreateHero : HttpHandler = 
+    Request.bindJson
+        (fun heroDto ->
+            createHero heroDto
+            |> Response.ofJson)
+        (fun error ->
+            Response.withStatusCode 400 
+            >> Response.ofPlainText "Bad request")
+
+[<EntryPoint>]
+let main args =      
+    webHost args {
+        endpoints [            
+            get "/heroes" handleGetHeroes 
+
+            post "/heroes" handleCreateHero
+
+            get "/" (Response.ofPlainText "Hello, HeroAPI here!")
+        ]
+    }        
+    0
