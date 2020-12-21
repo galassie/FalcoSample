@@ -35,8 +35,5 @@ let getHeroes (storage : IStorage<Hero>) =
     storage.Get
 
 let createHero (storage : IStorage<Hero>) hero =
-    { Id = Guid.NewGuid()
-      Name = hero.Name
-      Species = hero.Species
-      Abilities = hero.Abilities }
+    { hero with Id = Guid.NewGuid() }
     |> storage.Add
