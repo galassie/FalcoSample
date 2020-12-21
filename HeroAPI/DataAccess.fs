@@ -18,7 +18,7 @@ type HeroSqliteStorage() =
                     "@Id", SqlType.String (hero.Id.ToString())
                     "@Name", SqlType.String hero.Name
                     "@Species", SqlType.String (hero.Species |> Species.toString)
-                    "@Abilities", SqlType.String (hero.Abilities |> List.map (fun (Ability str) -> str) |> List.reduce (fun acc elem -> acc + "," + elem))
+                    "@Abilities", SqlType.String (hero.Abilities |> Array.map (fun (Ability str) -> str) |> Array.reduce (fun acc elem -> acc + "," + elem))
                 ]
             }
             |> DbConn.exec
@@ -34,7 +34,7 @@ type HeroSqliteStorage() =
                 { Id = (rd.ReadString "Id" |> Guid.Parse)
                   Name = rd.ReadString "Name"
                   Species = (rd.ReadString "Species" |> Species.parse)
-                  Abilities = (rd.ReadString "Abilities" |> (fun el -> el.Split [|','|]) |> Array.map (fun ab -> Ability ab) |> Array.toList)})
+                  Abilities = (rd.ReadString "Abilities" |> (fun el -> el.Split [|','|]) |> Array.map (fun ab -> Ability ab))})
             |> function
                 | Result.Ok heroes -> heroes
                 | Result.Error _ -> []

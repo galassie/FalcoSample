@@ -21,12 +21,7 @@ type Hero =
     { Id: Guid
       Name: string
       Species: Species 
-      Abilities: Ability list }
-
-type HeroDto =
-    { Name: string
-      Species: Species 
-      Abilities: Ability list }
+      Abilities: Ability array }
 
 type IStorage<'T> =
     abstract member Get : unit-> 'T list
@@ -35,9 +30,9 @@ type IStorage<'T> =
 let getHeroes (storage : IStorage<Hero>) =
     storage.Get
 
-let createHero (storage : IStorage<Hero>) heroDto =
+let createHero (storage : IStorage<Hero>) hero =
     { Id = Guid.NewGuid()
-      Name = heroDto.Name
-      Species = heroDto.Species
-      Abilities = heroDto.Abilities }
+      Name = hero.Name
+      Species = hero.Species
+      Abilities = hero.Abilities }
     |> storage.Add
