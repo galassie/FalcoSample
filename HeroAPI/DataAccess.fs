@@ -10,7 +10,7 @@ type HeroSqliteStorage() =
     let connString = "Filename=" + Path.Combine(Directory.GetCurrentDirectory(), "heroes.db")
 
     interface IStorage<Hero> with
-        member this.Add(hero : Hero): Hero = 
+        member this.Add(hero : Hero) : Result<Hero, Error> = 
             use conn = new SqliteConnection(connString)
             dbCommand conn {
                 cmdText "INSERT INTO hero VALUES (@Id,@Name,@Species,@Abilities)"
@@ -23,9 +23,9 @@ type HeroSqliteStorage() =
             }
             |> DbConn.exec
             |> function
-                | Result.Ok _ -> hero
-                | Result.Error _ -> hero
-        member this.Get(): Hero list = 
+                | Result.Ok _ -> Result.Ok hero
+                | Result.Error err -> Result.Error (DbError (err.Statement, err.Error :> Exception))
+        member this.Get(): Result<Hero list, Error> = 
             use conn = new SqliteConnection(connString)
             dbCommand conn {
                 cmdText "SELECT * FROM hero"
@@ -36,5 +36,5 @@ type HeroSqliteStorage() =
                   Species = (rd.ReadString "Species" |> Species.parse)
                   Abilities = (rd.ReadString "Abilities" |> (fun el -> el.Split [|','|]) |> Array.map (fun ab -> Ability ab))})
             |> function
-                | Result.Ok heroes -> heroes
-                | Result.Error _ -> []
+                | Result.Ok heroes -> Result.Ok heroes
+                | Result.Error err  -> Result.Error (DbError (err.Statement, err.Error :> Exception))

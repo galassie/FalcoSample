@@ -23,9 +23,13 @@ type Hero =
       Species: Species 
       Abilities: Ability array }
 
+type Error =
+    | GenericError of string
+    | DbError of (string * Exception)
+
 type IStorage<'T> =
-    abstract member Get : unit-> 'T list
-    abstract member Add : 'T -> 'T
+    abstract member Get : unit-> Result<'T list, Error>
+    abstract member Add : 'T -> Result<'T, Error>
 
 let getHeroes (storage : IStorage<Hero>) =
     storage.Get

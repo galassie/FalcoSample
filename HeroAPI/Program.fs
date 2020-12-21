@@ -18,6 +18,11 @@ let mapHero hero =
        Species = hero.Species |> Species.toString 
        Abilities = hero.Abilities |> Array.map (fun (Ability ab) -> ab) |}
 
+let handleError =
+    function
+    | GenericError message -> Response.withStatusCode 400 >> Response.ofPlainText message
+    | DbError (message, _) -> Response.withStatusCode 500 >> Response.ofPlainText message
+
 type HeroInput =
     { Name: string
       Species: string
@@ -28,8 +33,12 @@ let handleGetHeroes : HttpHandler =
         (ignore)
         (fun _ -> 
             getHeroesWithStorage ()
-            |> List.map mapHero
-            |> Response.ofJson)
+            |> function
+                | Result.Ok heroes ->
+                    heroes
+                    |> List.map mapHero
+                    |> Response.ofJson
+                | Result.Error error -> handleError error)
 
 let handleCreateHero : HttpHandler = 
     Request.bindJson
@@ -39,8 +48,12 @@ let handleCreateHero : HttpHandler =
               Species = (heroInput.Species |> Species.parse)
               Abilities = (heroInput.Abilities |> Array.map (fun ab -> Ability ab)) }
             |> createHeroWithStorage
-            |> mapHero
-            |> Response.ofJson)
+            |> function
+                | Result.Ok hero ->
+                    hero
+                    |> mapHero
+                    |> Response.ofJson
+                | Result.Error error -> handleError error)
         (fun _ ->
             Response.withStatusCode 400 
             >> Response.ofPlainText "Bad request")
