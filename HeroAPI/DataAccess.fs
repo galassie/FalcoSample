@@ -7,7 +7,7 @@ open Microsoft.Data.Sqlite
 open HeroAPI.Domain
 
 type HeroSqliteStorage() =
-    let connString = "Filename=" + Path.Combine(Directory.GetCurrentDirectory(), "hero.db")
+    let connString = "Filename=" + Path.Combine(Directory.GetCurrentDirectory(), "heroes.db")
 
     interface IStorage<Hero> with
         member this.Add(hero : Hero): Hero = 
