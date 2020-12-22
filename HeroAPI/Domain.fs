@@ -30,6 +30,7 @@ type Error =
 type IStorage<'T> =
     abstract member Get : unit-> Result<'T list, Error>
     abstract member Add : 'T -> Result<'T, Error>
+    abstract member Update : 'T -> Result<'T, Error>
 
 let getHeroes (storage : IStorage<Hero>) =
     storage.Get
@@ -37,3 +38,6 @@ let getHeroes (storage : IStorage<Hero>) =
 let createHero (storage : IStorage<Hero>) hero =
     { hero with Id = Guid.NewGuid() }
     |> storage.Add
+
+let updateHero (storage : IStorage<Hero>) hero =
+    storage.Update hero
