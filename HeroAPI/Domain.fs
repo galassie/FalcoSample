@@ -29,10 +29,10 @@ type Error =
     | DbError of (string * Exception)
 
 type IStorage<'T> =
-    abstract member GetAll : unit-> Result<'T list, Error>
-    abstract member Get : Guid-> Result<'T option, Error>
-    abstract member Add : 'T -> Result<'T, Error>
-    abstract member Update : 'T -> Result<'T, Error>
+    abstract member GetAll : unit -> Result<'T list, Error>
+    abstract member Get    : Guid -> Result<'T option, Error>
+    abstract member Add    : 'T   -> Result<'T, Error>
+    abstract member Update : 'T   -> Result<'T, Error>
     abstract member Delete : Guid -> Result<unit, Error>
 
 let getHeroes (storage : IStorage<Hero>) =
