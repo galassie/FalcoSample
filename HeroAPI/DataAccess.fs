@@ -63,7 +63,7 @@ type HeroSqliteStorage() =
         member _.Update(hero : Hero) : Result<Hero, Error> = 
             use conn = new SqliteConnection(connString)
             dbCommand conn {
-                cmdText "UPDATE hero SET Name=@Name,Speices=@Species,Abilities=@Abilities WHERE Id=@Id"
+                cmdText "UPDATE hero SET Name=@Name,Species=@Species,Abilities=@Abilities WHERE Id=@Id"
                 cmdParam [
                     "@Id", SqlType.String (hero.Id.ToString())
                     "@Name", SqlType.String hero.Name
