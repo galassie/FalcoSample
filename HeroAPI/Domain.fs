@@ -25,19 +25,35 @@ type Hero =
 
 type Error =
     | GenericError of string
+    | NotFoundError of string
     | DbError of (string * Exception)
 
 type IStorage<'T> =
-    abstract member Get : unit-> Result<'T list, Error>
+    abstract member GetAll : unit-> Result<'T list, Error>
+    abstract member Get : Guid-> Result<'T option, Error>
     abstract member Add : 'T -> Result<'T, Error>
     abstract member Update : 'T -> Result<'T, Error>
+    abstract member Delete : Guid -> Result<unit, Error>
 
 let getHeroes (storage : IStorage<Hero>) =
-    storage.Get
+    storage.GetAll
 
 let createHero (storage : IStorage<Hero>) hero =
     { hero with Id = Guid.NewGuid() }
     |> storage.Add
 
 let updateHero (storage : IStorage<Hero>) hero =
-    storage.Update hero
+    storage.Get hero.Id
+    |> Result.bind (fun heroOpt -> 
+        match heroOpt with
+        | Option.Some _ -> storage.Update hero
+        | Option.None   -> Result.Error (NotFoundError ("Hero Id not found: " + hero.Id.ToString())))
+
+let deleteHero (storage : IStorage<Hero>) heroId =
+    storage.Get heroId
+    |> Result.bind (fun heroOpt -> 
+        match heroOpt with
+        | Option.Some hero -> 
+            storage.Delete heroId
+            |> Result.map (fun _ -> hero)
+        | Option.None -> Result.Error (NotFoundError ("Hero Id not found: " + heroId.ToString())))

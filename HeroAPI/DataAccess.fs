@@ -10,7 +10,7 @@ type HeroSqliteStorage() =
     let connString = "Filename=" + Path.Combine(Directory.GetCurrentDirectory(), "heroes.db")
 
     interface IStorage<Hero> with
-        member _.Get(): Result<Hero list, Error> = 
+        member _.GetAll(): Result<Hero list, Error> = 
             use conn = new SqliteConnection(connString)
             dbCommand conn {
                 cmdText "SELECT * FROM hero"
@@ -21,8 +21,28 @@ type HeroSqliteStorage() =
                   Species = (rd.ReadString "Species" |> Species.parse)
                   Abilities = (rd.ReadString "Abilities" |> (fun el -> el.Split [|','|]) |> Array.map (fun ab -> Ability ab))})
             |> function
-                | Result.Ok heroes -> Result.Ok heroes
+                | Result.Ok heroes  -> Result.Ok heroes
                 | Result.Error err  -> Result.Error (DbError (err.Statement, err.Error :> Exception))
+                
+        member _.Get(heroId : Guid): Result<Hero option, Error> = 
+            use conn = new SqliteConnection(connString)
+            dbCommand conn {
+                cmdText "SELECT * FROM hero WHERE Id=@Id"
+                cmdParam [
+                    "@Id", SqlType.String (heroId.ToString())
+                ]
+            }
+            |> DbConn.query (fun rd -> 
+                { Id = (rd.ReadString "Id" |> Guid.Parse)
+                  Name = rd.ReadString "Name"
+                  Species = (rd.ReadString "Species" |> Species.parse)
+                  Abilities = (rd.ReadString "Abilities" |> (fun el -> el.Split [|','|]) |> Array.map (fun ab -> Ability ab))})
+            |> function
+                | Result.Ok heroes ->
+                    match heroes with
+                    | hero::_ -> Result.Ok (Option.Some hero)
+                    | []      -> Result.Ok Option.None
+                | Result.Error err -> Result.Error (DbError (err.Statement, err.Error :> Exception))
 
         member _.Add(hero : Hero) : Result<Hero, Error> = 
             use conn = new SqliteConnection(connString)
@@ -37,7 +57,7 @@ type HeroSqliteStorage() =
             }
             |> DbConn.exec
             |> function
-                | Result.Ok _ -> Result.Ok hero
+                | Result.Ok _      -> Result.Ok hero
                 | Result.Error err -> Result.Error (DbError (err.Statement, err.Error :> Exception))
 
         member _.Update(hero : Hero) : Result<Hero, Error> = 
@@ -53,5 +73,18 @@ type HeroSqliteStorage() =
             }
             |> DbConn.exec
             |> function
-                | Result.Ok _ -> Result.Ok hero
+                | Result.Ok _      -> Result.Ok hero
+                | Result.Error err -> Result.Error (DbError (err.Statement, err.Error :> Exception))
+                
+        member _.Delete(heroId : Guid) : Result<unit, Error> = 
+            use conn = new SqliteConnection(connString)
+            dbCommand conn {
+                cmdText "DELETE FROM hero WHERE Id=@Id"
+                cmdParam [
+                    "@Id", SqlType.String (heroId.ToString())
+                ]
+            }
+            |> DbConn.exec
+            |> function
+                | Result.Ok _      -> Result.Ok ()
                 | Result.Error err -> Result.Error (DbError (err.Statement, err.Error :> Exception))

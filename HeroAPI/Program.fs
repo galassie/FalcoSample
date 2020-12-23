@@ -13,8 +13,9 @@ let handleGenericBadRequest _ =
 
 let handleError =
     function
-    | GenericError message -> Response.withStatusCode 400 >> Response.ofPlainText message
-    | DbError (message, _) -> Response.withStatusCode 500 >> Response.ofPlainText message
+    | GenericError message  -> Response.withStatusCode 400 >> Response.ofPlainText message
+    | NotFoundError message -> Response.withStatusCode 404 >> Response.ofPlainText message
+    | DbError (message, _)  -> Response.withStatusCode 500 >> Response.ofPlainText message
 
 let handleGetHeroes getHeroesUseCase : HttpHandler =
     Request.mapRoute
@@ -45,7 +46,7 @@ let handleUpdateHero updateHeroUseCase : HttpHandler =
             routeCollection.TryGetString "id"
             |> function 
                 | Some id when Guid.TryParse(id, &heroId) -> Result.Ok heroId
-                | _  -> Result.Error "No valid Hero Id provided")
+                | _                                       -> Result.Error "No valid Hero Id provided")
         (fun heroId ->
             Request.bindJson
                 (fun heroInput -> 
@@ -57,6 +58,21 @@ let handleUpdateHero updateHeroUseCase : HttpHandler =
                 handleGenericBadRequest)
         handleGenericBadRequest
 
+let handleDeleteHero deleteHeroUseCase : HttpHandler =
+    Request.bindRoute
+        (fun routeCollection -> 
+            let mutable heroId = Guid.Empty
+            routeCollection.TryGetString "id"
+            |> function 
+                | Some id when Guid.TryParse(id, &heroId) -> Result.Ok heroId
+                | _                                       -> Result.Error "No valid Hero Id provided")
+        (fun heroId ->
+            deleteHeroUseCase heroId
+            |> function
+                | Result.Ok hero     -> HeroMapper.output hero |> Response.ofJson
+                | Result.Error error -> handleError error)
+        handleGenericBadRequest
+
 [<EntryPoint>]
 let main args =
         
@@ -65,6 +81,7 @@ let main args =
     let getHeroesWithStorage = getHeroes storage
     let createHeroWithStorage = createHero storage
     let updateHeroWithStorage = updateHero storage
+    let deleteHeroWithStorage = deleteHero storage
 
     webHost args {
         endpoints [            
@@ -73,6 +90,8 @@ let main args =
             post "/heroes" (handleCreateHero createHeroWithStorage)
 
             put "/heroes/{id:guid}" (handleUpdateHero updateHeroWithStorage)
+
+            delete "/heroes/{id:guid}" (handleDeleteHero deleteHeroWithStorage)
 
             get "/" (Response.ofPlainText "Hello, HeroAPI here!")
         ]
