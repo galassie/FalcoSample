@@ -8,6 +8,13 @@ open HeroAPI.Domain
 open HeroAPI.DataAccess
 open HeroAPI.Mapper
 
+let getHeroIdFromRoute (routeCollection : RouteCollectionReader) =
+    let mutable heroId = Guid.Empty
+    routeCollection.TryGetString "id"
+    |> function 
+        | Some id when Guid.TryParse(id, &heroId) -> Result.Ok heroId
+        | _                                       -> Result.Error "No valid Hero Id provided"
+
 let handleGenericBadRequest _ =
     Response.withStatusCode 400 >> Response.ofPlainText "Bad request"
 
@@ -29,6 +36,19 @@ let handleGetHeroes getHeroesUseCase : HttpHandler =
                     |> Response.ofJson
                 | Result.Error error -> handleError error)
 
+let handleGetHero getHeroUseCase : HttpHandler =
+    Request.bindRoute
+        getHeroIdFromRoute
+        (fun heroId ->
+            getHeroUseCase heroId
+            |> function
+                | Result.Ok hero ->
+                    hero
+                    |> HeroMapper.output
+                    |> Response.ofJson
+                | Result.Error error -> handleError error)
+        handleGenericBadRequest
+
 let handleCreateHero createHeroUseCase : HttpHandler = 
     Request.bindJson
         (fun heroInput ->
@@ -41,12 +61,7 @@ let handleCreateHero createHeroUseCase : HttpHandler =
 
 let handleUpdateHero updateHeroUseCase : HttpHandler =
     Request.bindRoute
-        (fun routeCollection -> 
-            let mutable heroId = Guid.Empty
-            routeCollection.TryGetString "id"
-            |> function 
-                | Some id when Guid.TryParse(id, &heroId) -> Result.Ok heroId
-                | _                                       -> Result.Error "No valid Hero Id provided")
+        getHeroIdFromRoute
         (fun heroId ->
             Request.bindJson
                 (fun heroInput -> 
@@ -60,12 +75,7 @@ let handleUpdateHero updateHeroUseCase : HttpHandler =
 
 let handleDeleteHero deleteHeroUseCase : HttpHandler =
     Request.bindRoute
-        (fun routeCollection -> 
-            let mutable heroId = Guid.Empty
-            routeCollection.TryGetString "id"
-            |> function 
-                | Some id when Guid.TryParse(id, &heroId) -> Result.Ok heroId
-                | _                                       -> Result.Error "No valid Hero Id provided")
+        getHeroIdFromRoute
         (fun heroId ->
             deleteHeroUseCase heroId
             |> function
@@ -79,13 +89,16 @@ let main args =
     let storage = new HeroSqliteStorage()
     
     let getHeroesWithStorage = getHeroes storage
+    let getHeroWithStorage = getHero storage
     let createHeroWithStorage = createHero storage
     let updateHeroWithStorage = updateHero storage
     let deleteHeroWithStorage = deleteHero storage
 
     webHost args {
-        endpoints [            
+        endpoints [
             get "/heroes" (handleGetHeroes getHeroesWithStorage)
+
+            get "/heroes/{id:guid}" (handleGetHero getHeroWithStorage)
 
             post "/heroes" (handleCreateHero createHeroWithStorage)
 

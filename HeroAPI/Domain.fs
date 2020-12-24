@@ -38,6 +38,13 @@ type IStorage<'T> =
 let getHeroes (storage : IStorage<Hero>) =
     storage.GetAll
 
+let getHero (storage : IStorage<Hero>) heroId =
+    storage.Get heroId
+    |> Result.bind (fun heroOpt -> 
+        match heroOpt with
+        | Option.Some hero -> Result.Ok hero
+        | Option.None      -> Result.Error (NotFoundError ("Hero Id not found: " + heroId.ToString())))
+
 let createHero (storage : IStorage<Hero>) hero =
     { hero with Id = Guid.NewGuid() }
     |> storage.Add
