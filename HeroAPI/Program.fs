@@ -9,11 +9,10 @@ open HeroAPI.DataAccess
 open HeroAPI.Mapper
 
 let getHeroIdFromRoute (routeCollection : RouteCollectionReader) =
-    let mutable heroId = Guid.Empty
-    routeCollection.TryGetString "id"
+    routeCollection.TryGetGuid "id"
     |> function 
-        | Some id when Guid.TryParse(id, &heroId) -> Result.Ok heroId
-        | _                                       -> Result.Error "No valid Hero Id provided"
+        | Some heroId -> Result.Ok heroId
+        | _           -> Result.Error "No valid Hero Id provided"
 
 let handleGenericBadRequest _ =
     Response.withStatusCode 400 >> Response.ofPlainText "Bad request"
