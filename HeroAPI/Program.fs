@@ -11,8 +11,8 @@ open HeroAPI.Mapper
 let getHeroIdFromRoute (routeCollection : RouteCollectionReader) =
     routeCollection.TryGetGuid "id"
     |> function 
-        | Some heroId -> Result.Ok heroId
-        | _           -> Result.Error "No valid Hero Id provided"
+        | Some heroId -> Ok heroId
+        | _           -> Error "No valid Hero Id provided"
 
 let handleGenericBadRequest _ =
     Response.withStatusCode 400 >> Response.ofPlainText "Bad request"
@@ -29,11 +29,11 @@ let handleGetHeroes getHeroesUseCase : HttpHandler =
         (fun _ -> 
             getHeroesUseCase ()
             |> function
-                | Result.Ok heroes ->
+                | Ok heroes ->
                     heroes
                     |> List.map HeroMapper.output
                     |> Response.ofJson
-                | Result.Error error -> handleError error)
+                | Error error -> handleError error)
 
 let handleGetHero getHeroUseCase : HttpHandler =
     Request.bindRoute
@@ -41,11 +41,11 @@ let handleGetHero getHeroUseCase : HttpHandler =
         (fun heroId ->
             getHeroUseCase heroId
             |> function
-                | Result.Ok hero ->
+                | Ok hero ->
                     hero
                     |> HeroMapper.output
                     |> Response.ofJson
-                | Result.Error error -> handleError error)
+                | Error error -> handleError error)
         handleGenericBadRequest
 
 let handleCreateHero createHeroUseCase : HttpHandler = 
@@ -54,8 +54,8 @@ let handleCreateHero createHeroUseCase : HttpHandler =
             HeroMapper.input Guid.Empty heroInput
             |> createHeroUseCase
             |> function
-                | Result.Ok hero     -> HeroMapper.output hero |> Response.ofJson
-                | Result.Error error -> handleError error)
+                | Ok hero     -> HeroMapper.output hero |> Response.ofJson
+                | Error error -> handleError error)
         handleGenericBadRequest
 
 let handleUpdateHero updateHeroUseCase : HttpHandler =
@@ -67,8 +67,8 @@ let handleUpdateHero updateHeroUseCase : HttpHandler =
                       HeroMapper.input heroId heroInput
                       |> updateHeroUseCase
                       |> function
-                          | Result.Ok hero     -> HeroMapper.output hero |> Response.ofJson
-                          | Result.Error error -> handleError error)
+                          | Ok hero     -> HeroMapper.output hero |> Response.ofJson
+                          | Error error -> handleError error)
                 handleGenericBadRequest)
         handleGenericBadRequest
 
@@ -78,8 +78,8 @@ let handleDeleteHero deleteHeroUseCase : HttpHandler =
         (fun heroId ->
             deleteHeroUseCase heroId
             |> function
-                | Result.Ok hero     -> HeroMapper.output hero |> Response.ofJson
-                | Result.Error error -> handleError error)
+                | Ok hero     -> HeroMapper.output hero |> Response.ofJson
+                | Error error -> handleError error)
         handleGenericBadRequest
 
 [<EntryPoint>]

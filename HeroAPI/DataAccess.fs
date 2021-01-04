@@ -21,8 +21,8 @@ type HeroSqliteStorage() =
                   Species = (rd.ReadString "Species" |> Species.parse)
                   Abilities = (rd.ReadString "Abilities" |> (fun el -> el.Split [|','|]) |> Array.map (fun ab -> Ability ab))})
             |> function
-                | Result.Ok heroes  -> Result.Ok heroes
-                | Result.Error err  -> Result.Error (DbError (err.Statement, err.Error :> Exception))
+                | Ok heroes  -> Ok heroes
+                | Error err  -> Error (DbError (err.Statement, err.Error :> Exception))
                 
         member _.Get(heroId : Guid): Result<Hero option, Error> = 
             use conn = new SqliteConnection(connString)
@@ -38,11 +38,11 @@ type HeroSqliteStorage() =
                   Species = (rd.ReadString "Species" |> Species.parse)
                   Abilities = (rd.ReadString "Abilities" |> (fun el -> el.Split [|','|]) |> Array.map (fun ab -> Ability ab))})
             |> function
-                | Result.Ok heroes ->
+                | Ok heroes ->
                     match heroes with
-                    | hero::_ -> Result.Ok (Option.Some hero)
-                    | []      -> Result.Ok Option.None
-                | Result.Error err -> Result.Error (DbError (err.Statement, err.Error :> Exception))
+                    | hero::_ -> Ok (Option.Some hero)
+                    | []      -> Ok Option.None
+                | Error err -> Error (DbError (err.Statement, err.Error :> Exception))
 
         member _.Add(hero : Hero) : Result<Hero, Error> = 
             use conn = new SqliteConnection(connString)
@@ -57,8 +57,8 @@ type HeroSqliteStorage() =
             }
             |> DbConn.exec
             |> function
-                | Result.Ok _      -> Result.Ok hero
-                | Result.Error err -> Result.Error (DbError (err.Statement, err.Error :> Exception))
+                | Ok _      -> Ok hero
+                | Error err -> Error (DbError (err.Statement, err.Error :> Exception))
 
         member _.Update(hero : Hero) : Result<Hero, Error> = 
             use conn = new SqliteConnection(connString)
@@ -73,8 +73,8 @@ type HeroSqliteStorage() =
             }
             |> DbConn.exec
             |> function
-                | Result.Ok _      -> Result.Ok hero
-                | Result.Error err -> Result.Error (DbError (err.Statement, err.Error :> Exception))
+                | Ok _      -> Ok hero
+                | Error err -> Error (DbError (err.Statement, err.Error :> Exception))
                 
         member _.Delete(heroId : Guid) : Result<unit, Error> = 
             use conn = new SqliteConnection(connString)
@@ -86,5 +86,5 @@ type HeroSqliteStorage() =
             }
             |> DbConn.exec
             |> function
-                | Result.Ok _      -> Result.Ok ()
-                | Result.Error err -> Result.Error (DbError (err.Statement, err.Error :> Exception))
+                | Ok _      -> Ok ()
+                | Error err -> Error (DbError (err.Statement, err.Error :> Exception))

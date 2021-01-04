@@ -42,8 +42,8 @@ let getHero (storage : IStorage<Hero>) heroId =
     storage.Get heroId
     |> Result.bind (fun heroOpt -> 
         match heroOpt with
-        | Option.Some hero -> Result.Ok hero
-        | Option.None      -> Result.Error (NotFoundError ("Hero Id not found: " + heroId.ToString())))
+        | Some hero -> Ok hero
+        | None      -> Error (NotFoundError ("Hero Id not found: " + heroId.ToString())))
 
 let createHero (storage : IStorage<Hero>) hero =
     { hero with Id = Guid.NewGuid() }
@@ -53,14 +53,14 @@ let updateHero (storage : IStorage<Hero>) hero =
     storage.Get hero.Id
     |> Result.bind (fun heroOpt -> 
         match heroOpt with
-        | Option.Some _ -> storage.Update hero
-        | Option.None   -> Result.Error (NotFoundError ("Hero Id not found: " + hero.Id.ToString())))
+        | Some _ -> storage.Update hero
+        | None   -> Error (NotFoundError ("Hero Id not found: " + hero.Id.ToString())))
 
 let deleteHero (storage : IStorage<Hero>) heroId =
     storage.Get heroId
     |> Result.bind (fun heroOpt -> 
         match heroOpt with
-        | Option.Some hero -> 
+        | Some hero -> 
             storage.Delete heroId
             |> Result.map (fun _ -> hero)
-        | Option.None -> Result.Error (NotFoundError ("Hero Id not found: " + heroId.ToString())))
+        | None -> Error (NotFoundError ("Hero Id not found: " + heroId.ToString())))
